@@ -182,6 +182,16 @@ int next_token() {
     }
 }
 
+// parser
+//
+// grammar:
+// expression -> add;
+// add        -> mult ( ('+' | '-' | '|' | '^') mult )*;
+// mult       -> unary ( ('*' | '/' | '%' | '<<' | '>>' | '&') unary )*;
+// unary      -> ( '-' | '~' ) unary | INT;
+//
+// INT is just an integer number token
+
 void print_token(Token token) {
     switch (token.kind) {
     case TOKEN_INT:
