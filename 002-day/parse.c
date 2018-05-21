@@ -73,6 +73,7 @@ typedef enum TokenKind {
     TOKEN_PLUS,
     TOKEN_PIPE,
     TOKEN_CARET,
+    TOKEN_EOF,
     // ...
 } TokenKind;
 
@@ -168,6 +169,10 @@ int next_token() {
         token.kind = TOKEN_CARET;
         stream++;
         break;
+    case '\0':
+        token.kind = TOKEN_EOF;
+        stream++;
+        break;
     default:
         is_invalid_token = 1;
         token.kind = *stream++;
@@ -204,15 +209,27 @@ void print_token(Token token) {
     }
 }
 
-void lex_test() {
-    char *source = "12*34 + 45/56 + ~25";
-    stream = source;
-    while (next_token()) {
-        print_token(token);
+void print_tokens(Token *tokens) {
+    for (size_t i = 0; i < buf_len(tokens); i++) {
+        print_token(tokens[i]);
     }
 }
 
 int main(int argc, char **argv) {
-    lex_test();
+    char *source = "12*34 + 45/56 + ~25";
+    stream = source;
+
+    int is_valid_token = 0;
+    Token *tokens = NULL;
+    while ((is_valid_token = next_token()) && (token.kind != TOKEN_EOF)) {
+        buf_push(tokens, token);
+    }
+
+    if (!is_valid_token) {
+        printf("Invalid token\n");
+    } else {
+        print_tokens(tokens);
+    }
+
     return 0;
 }
