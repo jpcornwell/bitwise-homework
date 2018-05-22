@@ -197,6 +197,152 @@ int next_token() {
 //
 // INT is just an integer number token
 
+typedef struct AST_Node {
+    TokenKind kind;
+    struct AST_Node *left;
+    struct AST_Node *right;
+    union {
+        uint64_t val;
+    };
+} AST_Node;
+
+AST_Node *create_ast_node(Token token) {
+    AST_Node *node;
+
+    node = malloc(sizeof(*node));
+
+    (*node).kind = token.kind;
+    (*node).val = token.val;
+
+    return node;
+}
+
+void print_ast(AST_Node *node) {
+    if ((*node).kind == TOKEN_INT) {
+        printf("%lu", (*node).val);
+        return;
+    } else {
+        printf("(");
+        switch((*node).kind) {
+            case TOKEN_MINUS:
+                printf("- ");
+                break;
+            case TOKEN_TILDE:
+                printf("~ ");
+                break;
+            case TOKEN_STAR:
+                printf("* ");
+                break;
+            case TOKEN_SLASH:
+                printf("/ ");
+                break;
+            case TOKEN_PERCENT:
+                printf("%% ");
+                break;
+            case TOKEN_DOUBLE_LT:
+                printf("<< ");
+                break;
+            case TOKEN_DOUBLE_GT:
+                printf(">> ");
+                break;
+            case TOKEN_AMPERSAND:
+                printf("& ");
+                break;
+            case TOKEN_PLUS:
+                printf("+ ");
+                break;
+            case TOKEN_PIPE:
+                printf("| ");
+                break;
+            case TOKEN_CARET:
+                printf("^ ");
+                break;
+            case TOKEN_EOF:
+                printf("EOF ");
+                break;
+            default:
+                printf("<op not recognized>");
+                break;
+        }
+        print_ast((*node).left);
+        if ((*node).right) {
+            printf(" ");
+            print_ast((*node).right);
+        }
+        printf(")");
+        return;
+    }
+}
+
+AST_Node *parse_unary() {
+    AST_Node *node;
+
+    if (token.kind == TOKEN_MINUS ||
+        token.kind == TOKEN_TILDE) {
+        node = create_ast_node(token);
+        next_token();
+        (*node).left = parse_unary();
+        (*node).right = NULL;
+    } else if (token.kind == TOKEN_INT) {
+        node = create_ast_node(token);
+        next_token();
+    }
+    return node;
+}
+
+AST_Node *parse_mult() {
+    AST_Node *node;
+    AST_Node *left;
+    AST_Node *right;
+
+    node = parse_unary();
+
+    while (token.kind == TOKEN_STAR ||
+           token.kind == TOKEN_SLASH ||
+           token.kind == TOKEN_PERCENT ||
+           token.kind == TOKEN_DOUBLE_LT ||
+           token.kind == TOKEN_DOUBLE_GT ||
+           token.kind == TOKEN_AMPERSAND) {
+        left = node;
+        node = create_ast_node(token);
+        next_token();
+        right = parse_unary();
+        (*node).left = left;
+        (*node).right = right;
+    }
+
+    return node;
+}
+
+AST_Node *parse_add() {
+    AST_Node *node;
+    AST_Node *left;
+    AST_Node *right;
+
+    node = parse_mult();
+
+    while (token.kind == TOKEN_PLUS ||
+           token.kind == TOKEN_MINUS ||
+           token.kind == TOKEN_PIPE ||
+           token.kind == TOKEN_CARET) {
+        left = node;
+        node = create_ast_node(token);
+        next_token();
+        right = parse_mult();
+        (*node).left = left;
+        (*node).right = right;
+    }
+
+    return node;
+}
+
+AST_Node *parse_expression() {
+    AST_Node *tree;
+    next_token();
+    tree = parse_add();
+    return tree;
+}
+
 void print_token(Token token) {
     switch (token.kind) {
     case TOKEN_INT:
@@ -219,17 +365,11 @@ int main(int argc, char **argv) {
     char *source = "12*34 + 45/56 + ~25";
     stream = source;
 
-    int is_valid_token = 0;
-    Token *tokens = NULL;
-    while ((is_valid_token = next_token()) && (token.kind != TOKEN_EOF)) {
-        buf_push(tokens, token);
-    }
+    AST_Node *tree;
 
-    if (!is_valid_token) {
-        printf("Invalid token\n");
-    } else {
-        print_tokens(tokens);
-    }
+    tree = parse_expression();
+    print_ast(tree);
+    printf("\n");
 
     return 0;
 }
