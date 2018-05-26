@@ -199,7 +199,7 @@ int next_token() {
 // expression -> add;
 // add        -> mult ( ('+' | '-' | '|' | '^') mult )*;
 // mult       -> expon ( ('*' | '/' | '%' | '<<' | '>>' | '&') expon )*;
-// expon      -> unary ( '**' unary )*;
+// expon      -> unary | (unary '**' expon);
 // unary      -> ( '-' | '~' ) unary | INT;
 //
 // INT is just an integer number token
@@ -309,34 +309,20 @@ AST_Node *parse_unary() {
 AST_Node *parse_expon() {
     AST_Node *node;
     AST_Node *left;
-    AST_Node *right = NULL;
-    AST_Node *temp;
-    AST_Node *orig_node = NULL;
+    AST_Node *right;
 
     left = parse_unary();
+    node = left;
 
     while (token.kind == TOKEN_EXPON) {
-        if (right) {
-            temp = node;
-            node = create_ast_node(token);
-            next_token();
-            node->left = temp->right;
-            temp->right = node;
-        } else {
-            node = create_ast_node(token);
-            next_token();
-            node->left = left;
-            orig_node = node;
-        }
-        right = parse_unary();
+        node = create_ast_node(token);
+        next_token();
+        right = parse_expon();
+        node->left = left;
         node->right = right;
     }
 
-    if (orig_node) {
-        return orig_node;
-    } else {
-        return left;
-    }
+    return node;
 }
 
 AST_Node *parse_mult() {
