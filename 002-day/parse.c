@@ -73,6 +73,7 @@ typedef enum TokenKind {
     TOKEN_PLUS,
     TOKEN_PIPE,
     TOKEN_CARET,
+    TOKEN_EXPON,
     TOKEN_EOF,
     // ...
 } TokenKind;
@@ -123,10 +124,6 @@ int next_token() {
         token.kind = TOKEN_TILDE;
         stream++;
         break;
-    case '*':
-        token.kind = TOKEN_STAR;
-        stream++;
-        break;
     case '/':
         token.kind = TOKEN_SLASH;
         stream++;
@@ -151,6 +148,15 @@ int next_token() {
         } else {
             is_invalid_token = 1;
             token.kind = *stream++;
+        }
+        break;
+    case '*':
+        if (*(stream+1) == '*') {
+            token.kind = TOKEN_EXPON;
+            stream += 2;
+        } else {
+            token.kind = TOKEN_STAR;
+            stream++;
         }
         break;
     case '&':
@@ -192,10 +198,13 @@ int next_token() {
 // grammar:
 // expression -> add;
 // add        -> mult ( ('+' | '-' | '|' | '^') mult )*;
-// mult       -> unary ( ('*' | '/' | '%' | '<<' | '>>' | '&') unary )*;
+// mult       -> expon ( ('*' | '/' | '%' | '<<' | '>>' | '&') expon )*;
+// expon      -> unary ( '**' unary )*;
 // unary      -> ( '-' | '~' ) unary | INT;
 //
 // INT is just an integer number token
+// Binary operators are left associative except for exponentiation which is
+//   right associative
 
 typedef struct AST_Node {
     TokenKind kind;
@@ -211,8 +220,10 @@ AST_Node *create_ast_node(Token token) {
 
     node = malloc(sizeof(*node));
 
-    (*node).kind = token.kind;
-    (*node).val = token.val;
+    node->kind = token.kind;
+    node->val = token.val;
+    node->left = NULL;
+    node->right = NULL;
 
     return node;
 }
@@ -245,6 +256,9 @@ void print_ast(AST_Node *node) {
             case TOKEN_DOUBLE_GT:
                 printf(">> ");
                 break;
+            case TOKEN_EXPON:
+                printf("** ");
+                break;
             case TOKEN_AMPERSAND:
                 printf("& ");
                 break;
@@ -264,8 +278,10 @@ void print_ast(AST_Node *node) {
                 printf("<op not recognized>");
                 break;
         }
-        print_ast((*node).left);
-        if ((*node).right) {
+        if (node->left) {
+            print_ast((*node).left);
+        }
+        if (node->right) {
             printf(" ");
             print_ast((*node).right);
         }
@@ -290,12 +306,45 @@ AST_Node *parse_unary() {
     return node;
 }
 
+AST_Node *parse_expon() {
+    AST_Node *node;
+    AST_Node *left;
+    AST_Node *right = NULL;
+    AST_Node *temp;
+    AST_Node *orig_node = NULL;
+
+    left = parse_unary();
+
+    while (token.kind == TOKEN_EXPON) {
+        if (right) {
+            temp = node;
+            node = create_ast_node(token);
+            next_token();
+            node->left = temp->right;
+            temp->right = node;
+        } else {
+            node = create_ast_node(token);
+            next_token();
+            node->left = left;
+            orig_node = node;
+        }
+        right = parse_unary();
+        node->right = right;
+    }
+
+    if (orig_node) {
+        return orig_node;
+    } else {
+        return left;
+    }
+}
+
 AST_Node *parse_mult() {
     AST_Node *node;
     AST_Node *left;
     AST_Node *right;
 
-    node = parse_unary();
+    node = parse_expon();
 
     while (token.kind == TOKEN_STAR ||
            token.kind == TOKEN_SLASH ||
@@ -306,7 +355,7 @@ AST_Node *parse_mult() {
         left = node;
         node = create_ast_node(token);
         next_token();
-        right = parse_unary();
+        right = parse_expon();
         (*node).left = left;
         (*node).right = right;
     }
@@ -362,7 +411,7 @@ void print_tokens(Token *tokens) {
 }
 
 int main(int argc, char **argv) {
-    char *source = "12*34 + 45/56 + ~25";
+    char *source = "12*34 + 45/56 + 2 ** 3 ** 4";
     stream = source;
 
     AST_Node *tree;
