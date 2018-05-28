@@ -45,6 +45,33 @@ It is definitely a little clunky but it satisfies the requirements.
 I was surprised just how similar the parsing logic was for the left and right
 associative binary operators.
 
-Possible uses for a table driven approach:
-------------------------------------------
-TODO
+Possible ways to use a table driven approach:
+---------------------------------------------
+To allow the user to define their own operators with a designated arity,
+precedence, and associativity would be an interesting challenge. The main
+challenge would be getting the user supplied information to the code that
+actually does the parsing.
+
+For a compiled language, I guess you could place the information in a sort of
+comment somewhere in the source code. Then the compiler would simply check to
+see if any additional operators are defined by the user, add this to its own
+operator table, and then use it during the parsing process.
+
+I have a feeling that a lisp like language would have some sort of mind
+boggling way of doing this at runtime, but I don't know a whole lot about lisps
+yet. 
+
+I guess any interpreted language could handle this though. Since interpreters
+are executing statements/expressions one at a time, if the user can define
+metadata which then modifies the behaviour of the interpreter (through some
+sort of language built-in), then it wouldn't be too tough. You would just have
+to ensure that the order of execution was correct. So in other words, the
+metadata has to be defined and read in by the interpreter before it gets to the
+code that contains a user defined operator.
+
+The other thing though, is the actual behaviour of the operator would have to
+be defined. How this could be handled would be a lot trickier. I imagine it
+would be something rather like a function, where the user defines the logic,
+and then the compiler/interpreter would either have to execute that logic
+directly or figure out how to translate that to some other format which is then
+what actually gets executed.
