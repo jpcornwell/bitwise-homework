@@ -39,7 +39,11 @@ and putting it back into the original expression.
 
 Factoring out repeated parsing code by using a table:
 -----------------------------------------------------
-TODO
+This is now incorporated into the parser via the function 'parse_using_table'.
+It is definitely a little clunky but it satisfies the requirements.
+
+I was surprised just how similar the parsing logic was for the left and right
+associative binary operators.
 
 Possible uses for a table driven approach:
 ------------------------------------------
