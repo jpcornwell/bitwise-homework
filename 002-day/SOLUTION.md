@@ -24,7 +24,18 @@ parser, and it results in right associativity.
 
 Parenthesized expressions:
 --------------------------
-TODO
+This is actually a pretty simple one too. Just modify the grammar and
+accompanying code to allow the 'unary' production to loop back to the 'add'
+non-terminal, like so.
+
+unary -> '(' add ')';
+
+Now subexpressions within parentheses will remain pushed down in the AST and
+will therefore be evaluated before their parent nodes.
+
+Another way to think about it is that you are simply taking subexpressions
+within parentheses, evaluating them in isolation, and then taking that result
+and putting it back into the original expression.
 
 Factoring out repeated parsing code by using a table:
 -----------------------------------------------------

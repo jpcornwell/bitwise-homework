@@ -74,6 +74,8 @@ typedef enum TokenKind {
     TOKEN_PIPE,
     TOKEN_CARET,
     TOKEN_EXPON,
+    TOKEN_LEFT_PAREN,
+    TOKEN_RIGHT_PAREN,
     TOKEN_EOF,
     // ...
 } TokenKind;
@@ -175,6 +177,14 @@ int next_token() {
         token.kind = TOKEN_CARET;
         stream++;
         break;
+    case '(':
+        token.kind = TOKEN_LEFT_PAREN;
+        stream++;
+        break;
+    case ')':
+        token.kind = TOKEN_RIGHT_PAREN;
+        stream++;
+        break;
     case '\0':
         token.kind = TOKEN_EOF;
         stream++;
@@ -200,7 +210,7 @@ int next_token() {
 // add        -> mult ( ('+' | '-' | '|' | '^') mult )*;
 // mult       -> expon ( ('*' | '/' | '%' | '<<' | '>>' | '&') expon )*;
 // expon      -> unary | (unary '**' expon);
-// unary      -> ( '-' | '~' ) unary | INT;
+// unary      -> ( '-' | '~' ) unary | INT | ( '(' add ')' );
 //
 // INT is just an integer number token
 // Binary operators are left associative except for exponentiation which is
@@ -290,6 +300,8 @@ void print_ast(AST_Node *node) {
     }
 }
 
+AST_Node *parse_add();
+
 AST_Node *parse_unary() {
     AST_Node *node;
 
@@ -302,6 +314,15 @@ AST_Node *parse_unary() {
     } else if (token.kind == TOKEN_INT) {
         node = create_ast_node(token);
         next_token();
+    } else if (token.kind == TOKEN_LEFT_PAREN) {
+        next_token();
+        node = parse_add();
+        if (token.kind == TOKEN_RIGHT_PAREN) {
+            next_token();
+        } else {
+            printf("Expected right parenthesis\n");
+            exit(1);
+        }
     }
     return node;
 }
@@ -397,7 +418,7 @@ void print_tokens(Token *tokens) {
 }
 
 int main(int argc, char **argv) {
-    char *source = "12*34 + 45/56 + 2 ** 3 ** 4";
+    char *source = "12*(34 + 45)/56 + 2 ** 3 ** 4";
     stream = source;
 
     AST_Node *tree;
