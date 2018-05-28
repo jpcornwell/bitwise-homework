@@ -233,12 +233,19 @@ typedef struct OpEntry {
 } OpEntry;
 
 #define OPS_PER_PREC_LEVEL 10
-#define MAX_PREC_LEVEL 2
+#define MAX_PREC_LEVEL 3
 
 OpEntry entry_table[][OPS_PER_PREC_LEVEL] = {
+    // unary
+    {
+        {TOKEN_MINUS, OP_UNARY, ASSOC_RIGHT},
+        {TOKEN_TILDE, OP_UNARY, ASSOC_RIGHT},
+    },
+    // expon
     {
         {TOKEN_EXPON, OP_BINARY, ASSOC_RIGHT},
     },
+    // mult
     {
         {TOKEN_STAR, OP_BINARY, ASSOC_LEFT},
         {TOKEN_SLASH, OP_BINARY, ASSOC_LEFT},
@@ -247,6 +254,7 @@ OpEntry entry_table[][OPS_PER_PREC_LEVEL] = {
         {TOKEN_DOUBLE_GT, OP_BINARY, ASSOC_LEFT},
         {TOKEN_AMPERSAND, OP_BINARY, ASSOC_LEFT},
     },
+    // add
     {
         {TOKEN_PLUS, OP_BINARY, ASSOC_LEFT},
         {TOKEN_MINUS, OP_BINARY, ASSOC_LEFT},
@@ -459,6 +467,7 @@ AST_Node *parse_using_table(int prec_level) {
     AST_Node *right;
     OpEntry op;
 
+    // handle integer literals and parentheses
     if (prec_level == -1) {
         if (token.kind == TOKEN_INT) {
             node = create_ast_node(token);
@@ -477,6 +486,18 @@ AST_Node *parse_using_table(int prec_level) {
         }
     }
 
+    // handle unary operators
+    if (get_op_from_row(prec_level, token, &op) && op.arity == OP_UNARY) {
+        node = create_ast_node(token);
+        next_token();
+        left = parse_using_table(prec_level);
+        right = NULL;
+        node->left = left;
+        node->right = right;
+        return node;
+    }
+
+    // handle binary operators
     node = parse_using_table(prec_level - 1);
 
     while (get_op_from_row(prec_level, token, &op)) {
@@ -491,6 +512,9 @@ AST_Node *parse_using_table(int prec_level) {
             }
             node->left = left;
             node->right = right;
+        } else {
+            printf("Binary operator expected\n");
+            exit(1);
         }
     }
 
@@ -516,8 +540,7 @@ void print_tokens(Token *tokens) {
 }
 
 int main(int argc, char **argv) {
-//    char *source = "12*(34 + 45)/56 + 2 ** 3 ** 4";
-    char *source = "(1 + 2) * 3 ** 4 ** 5";
+    char *source = "12*34 + 45/56 + ~~25 ** 2 ** 3";
     stream = source;
 
     AST_Node *tree;
