@@ -233,9 +233,12 @@ typedef struct OpEntry {
 } OpEntry;
 
 #define OPS_PER_PREC_LEVEL 10
-#define MAX_PREC_LEVEL 1
+#define MAX_PREC_LEVEL 2
 
 OpEntry entry_table[][OPS_PER_PREC_LEVEL] = {
+    {
+        {TOKEN_EXPON, OP_BINARY, ASSOC_RIGHT},
+    },
     {
         {TOKEN_STAR, OP_BINARY, ASSOC_LEFT},
         {TOKEN_SLASH, OP_BINARY, ASSOC_LEFT},
@@ -477,11 +480,15 @@ AST_Node *parse_using_table(int prec_level) {
     node = parse_using_table(prec_level - 1);
 
     while (get_op_from_row(prec_level, token, &op)) {
-        if (op.arity == OP_BINARY && op.assoc == ASSOC_LEFT) {
+        if (op.arity == OP_BINARY) {
             left = node;
             node = create_ast_node(token);
             next_token();
-            right = parse_using_table(prec_level - 1);
+            if (op.assoc == ASSOC_LEFT) {
+                right = parse_using_table(prec_level - 1);
+            } else if (op.assoc == ASSOC_RIGHT) {
+                right = parse_using_table(prec_level);
+            }
             node->left = left;
             node->right = right;
         }
@@ -510,7 +517,7 @@ void print_tokens(Token *tokens) {
 
 int main(int argc, char **argv) {
 //    char *source = "12*(34 + 45)/56 + 2 ** 3 ** 4";
-    char *source = "(1 + 2) * 3";
+    char *source = "(1 + 2) * 3 ** 4 ** 5";
     stream = source;
 
     AST_Node *tree;
