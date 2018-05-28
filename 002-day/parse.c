@@ -216,6 +216,57 @@ int next_token() {
 // Binary operators are left associative except for exponentiation which is
 //   right associative
 
+typedef enum OpArity {
+    OP_UNARY,
+    OP_BINARY,
+} OpArity;
+
+typedef enum OpAssoc {
+    ASSOC_LEFT,
+    ASSOC_RIGHT,
+} OpAssoc;
+
+typedef struct OpEntry {
+    TokenKind kind;
+    OpArity arity;
+    OpAssoc assoc;
+} OpEntry;
+
+#define OPS_PER_PREC_LEVEL 10
+#define MAX_PREC_LEVEL 1
+
+OpEntry entry_table[][OPS_PER_PREC_LEVEL] = {
+    {
+        {TOKEN_STAR, OP_BINARY, ASSOC_LEFT},
+        {TOKEN_SLASH, OP_BINARY, ASSOC_LEFT},
+        {TOKEN_PERCENT, OP_BINARY, ASSOC_LEFT},
+        {TOKEN_DOUBLE_LT, OP_BINARY, ASSOC_LEFT},
+        {TOKEN_DOUBLE_GT, OP_BINARY, ASSOC_LEFT},
+        {TOKEN_AMPERSAND, OP_BINARY, ASSOC_LEFT},
+    },
+    {
+        {TOKEN_PLUS, OP_BINARY, ASSOC_LEFT},
+        {TOKEN_MINUS, OP_BINARY, ASSOC_LEFT},
+        {TOKEN_PIPE, OP_BINARY, ASSOC_LEFT},
+        {TOKEN_CARET, OP_BINARY, ASSOC_LEFT},
+    },
+};
+
+int get_op_from_row(int prec_level, Token token, OpEntry *op) {
+
+    for (int i = 0; i < OPS_PER_PREC_LEVEL; i++) {
+        OpEntry a = entry_table[prec_level][i];
+        if (a.kind == token.kind) {
+            op->kind = a.kind;
+            op->arity = a.arity;
+            op->assoc = a.assoc;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 typedef struct AST_Node {
     TokenKind kind;
     struct AST_Node *left;
@@ -399,6 +450,46 @@ AST_Node *parse_expression() {
     return tree;
 }
 
+AST_Node *parse_using_table(int prec_level) {
+    AST_Node *node;
+    AST_Node *left;
+    AST_Node *right;
+    OpEntry op;
+
+    if (prec_level == -1) {
+        if (token.kind == TOKEN_INT) {
+            node = create_ast_node(token);
+            next_token();
+            return node;
+        } else if (token.kind == TOKEN_LEFT_PAREN) {
+            next_token();
+            node = parse_using_table(MAX_PREC_LEVEL);
+            if (token.kind == TOKEN_RIGHT_PAREN) {
+                next_token();
+                return node;
+            } else {
+                printf("Expected right parenthesis\n");
+                exit(1);
+            }
+        }
+    }
+
+    node = parse_using_table(prec_level - 1);
+
+    while (get_op_from_row(prec_level, token, &op)) {
+        if (op.arity == OP_BINARY && op.assoc == ASSOC_LEFT) {
+            left = node;
+            node = create_ast_node(token);
+            next_token();
+            right = parse_using_table(prec_level - 1);
+            node->left = left;
+            node->right = right;
+        }
+    }
+
+    return node;
+}
+
 void print_token(Token token) {
     switch (token.kind) {
     case TOKEN_INT:
@@ -418,12 +509,15 @@ void print_tokens(Token *tokens) {
 }
 
 int main(int argc, char **argv) {
-    char *source = "12*(34 + 45)/56 + 2 ** 3 ** 4";
+//    char *source = "12*(34 + 45)/56 + 2 ** 3 ** 4";
+    char *source = "(1 + 2) * 3";
     stream = source;
 
     AST_Node *tree;
 
-    tree = parse_expression();
+    // tree = parse_expression();
+    next_token();
+    tree = parse_using_table(MAX_PREC_LEVEL);
     print_ast(tree);
     printf("\n");
 
