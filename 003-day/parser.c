@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include "ast.h"
 #include "parser.h"
 
 // lexer
@@ -133,17 +134,70 @@ int next_token() {
 // Binary operators are left associative except for exponentiation which is
 //   right associative
 
+AST_Node *token_to_node(Token token) {
+    AST_Node *node;
+
+    switch (token.kind) {
+        case TOKEN_INT:
+            node = create_ast_node(AST_NODE_INT, token.val);
+            break;
+        case TOKEN_MINUS:
+            // TODO:
+            // look into allowing a minus token to be a SUBTRACT operator
+            // or a NEGATIVE operator based on context
+            node = create_ast_node(AST_NODE_SUBTRACT, 0);
+            break;
+        case TOKEN_TILDE:
+            node = create_ast_node(AST_NODE_COMPLEMENT, 0);
+            break;
+        case TOKEN_STAR:
+            node = create_ast_node(AST_NODE_MULT, 0);
+            break;
+        case TOKEN_SLASH:
+            node = create_ast_node(AST_NODE_DIVIDE, 0);
+            break;
+        case TOKEN_PERCENT:
+            node = create_ast_node(AST_NODE_MOD, 0);
+            break;
+        case TOKEN_DOUBLE_LT:
+            node = create_ast_node(AST_NODE_SHIFT_LEFT, 0);
+            break;
+        case TOKEN_DOUBLE_GT:
+            node = create_ast_node(AST_NODE_SHIFT_RIGHT, 0);
+            break;
+        case TOKEN_AMPERSAND:
+            node = create_ast_node(AST_NODE_AND, 0);
+            break;
+        case TOKEN_PLUS:
+            node = create_ast_node(AST_NODE_ADD, 0);
+            break;
+        case TOKEN_PIPE:
+            node = create_ast_node(AST_NODE_OR, 0);
+            break;
+        case TOKEN_CARET:
+            node = create_ast_node(AST_NODE_XOR, 0);
+            break;
+        case TOKEN_EXPON:
+            node = create_ast_node(AST_NODE_EXPON, 0);
+            break;
+        default:
+            printf("Error: Token cannot be converted to operator\n");
+            break;
+    }
+    return node;
+}
+
 AST_Node *parse_unary() {
     AST_Node *node;
 
     if (token.kind == TOKEN_MINUS ||
         token.kind == TOKEN_TILDE) {
-        node = create_ast_node(token);
+        node = token_to_node(token);
         next_token();
         (*node).left = parse_unary();
         (*node).right = NULL;
     } else if (token.kind == TOKEN_INT) {
-        node = create_ast_node(token);
+        node = token_to_node(token);
         next_token();
     } else if (token.kind == TOKEN_LEFT_PAREN) {
         next_token();
@@ -167,7 +221,7 @@ AST_Node *parse_expon() {
     node = left;
 
     while (token.kind == TOKEN_EXPON) {
-        node = create_ast_node(token);
+        node = token_to_node(token);
         next_token();
         right = parse_expon();
         node->left = left;
@@ -191,7 +245,7 @@ AST_Node *parse_mult() {
            token.kind == TOKEN_DOUBLE_GT ||
            token.kind == TOKEN_AMPERSAND) {
         left = node;
-        node = create_ast_node(token);
+        node = token_to_node(token);
         next_token();
         right = parse_expon();
         (*node).left = left;
@@ -213,7 +267,7 @@ AST_Node *parse_add() {
            token.kind == TOKEN_PIPE ||
            token.kind == TOKEN_CARET) {
         left = node;
-        node = create_ast_node(token);
+        node = token_to_node(token);
         next_token();
         right = parse_mult();
         (*node).left = left;

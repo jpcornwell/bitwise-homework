@@ -3,13 +3,13 @@
 
 #include "ast.h"
 
-AST_Node *create_ast_node(Token token) {
+AST_Node *create_ast_node(AstNodeKind kind, uint64_t val) {
     AST_Node *node;
 
     node = malloc(sizeof(*node));
 
-    node->kind = token.kind;
-    node->val = token.val;
+    node->kind = kind;
+    node->val = val;
     node->left = NULL;
     node->right = NULL;
 
@@ -17,50 +17,47 @@ AST_Node *create_ast_node(Token token) {
 }
 
 void print_ast(AST_Node *node) {
-    if ((*node).kind == TOKEN_INT) {
+    if ((*node).kind == AST_NODE_INT) {
         printf("%lu", (*node).val);
         return;
     } else {
         printf("(");
         switch((*node).kind) {
-            case TOKEN_MINUS:
+            case AST_NODE_SUBTRACT:
                 printf("- ");
                 break;
-            case TOKEN_TILDE:
+            case AST_NODE_COMPLEMENT:
                 printf("~ ");
                 break;
-            case TOKEN_STAR:
+            case AST_NODE_MULT:
                 printf("* ");
                 break;
-            case TOKEN_SLASH:
+            case AST_NODE_DIVIDE:
                 printf("/ ");
                 break;
-            case TOKEN_PERCENT:
+            case AST_NODE_MOD:
                 printf("%% ");
                 break;
-            case TOKEN_DOUBLE_LT:
+            case AST_NODE_SHIFT_LEFT:
                 printf("<< ");
                 break;
-            case TOKEN_DOUBLE_GT:
+            case AST_NODE_SHIFT_RIGHT:
                 printf(">> ");
                 break;
-            case TOKEN_EXPON:
+            case AST_NODE_EXPON:
                 printf("** ");
                 break;
-            case TOKEN_AMPERSAND:
+            case AST_NODE_AND:
                 printf("& ");
                 break;
-            case TOKEN_PLUS:
+            case AST_NODE_ADD:
                 printf("+ ");
                 break;
-            case TOKEN_PIPE:
+            case AST_NODE_OR:
                 printf("| ");
                 break;
-            case TOKEN_CARET:
+            case AST_NODE_XOR:
                 printf("^ ");
-                break;
-            case TOKEN_EOF:
-                printf("EOF ");
                 break;
             default:
                 printf("<op not recognized>");
