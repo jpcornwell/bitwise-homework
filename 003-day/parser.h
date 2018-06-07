@@ -20,7 +20,7 @@ typedef enum TokenKind {
     TOKEN_PLUS,
     TOKEN_PIPE,
     TOKEN_CARET,
-    TOKEN_EXPON,
+    TOKEN_DOUBLE_STAR,
     TOKEN_LEFT_PAREN,
     TOKEN_RIGHT_PAREN,
     TOKEN_EOF,

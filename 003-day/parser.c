@@ -72,7 +72,7 @@ int next_token() {
         break;
     case '*':
         if (*(stream+1) == '*') {
-            token.kind = TOKEN_EXPON;
+            token.kind = TOKEN_DOUBLE_STAR;
             stream += 2;
         } else {
             token.kind = TOKEN_STAR;
@@ -177,7 +177,7 @@ AST_Node *token_to_node(Token token) {
         case TOKEN_CARET:
             node = create_ast_node(AST_NODE_XOR, 0);
             break;
-        case TOKEN_EXPON:
+        case TOKEN_DOUBLE_STAR:
             node = create_ast_node(AST_NODE_EXPON, 0);
             break;
         default:
@@ -220,7 +220,7 @@ AST_Node *parse_expon() {
     left = parse_unary();
     node = left;
 
-    while (token.kind == TOKEN_EXPON) {
+    while (token.kind == TOKEN_DOUBLE_STAR) {
         node = token_to_node(token);
         next_token();
         right = parse_expon();
