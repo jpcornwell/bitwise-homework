@@ -1,4 +1,7 @@
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "ast.h"
 #include "parser.h"
 
@@ -6,20 +9,25 @@ void set_input_stream(char *source) {
     stream = source;
 }
 
-void generate_s_expression() {
+void test_s_expression(char *expected) {
     AST_Node *tree;
+    char s_expr[1000] = "";
 
     tree = parse_expression();
-    print_ast(tree);
-    printf("\n");
+    get_ast_s_expr(tree, s_expr);
+    if (strcmp(s_expr, expected) != 0) {
+        printf("S-expression test failed\nExpected: %s\nActual: %s\n",
+                expected, s_expr);
+        exit(1);
+    }
 }
 
 void run_test_suite() {
     set_input_stream("1 + 2");
-    generate_s_expression();
+    test_s_expression("(+ 1 2)");
 
     set_input_stream("1 + 2 * 3");
-    generate_s_expression();
+    test_s_expression("(+ 1 (* 2 3))");
 }
 
 int main(int argc, char **argv) {

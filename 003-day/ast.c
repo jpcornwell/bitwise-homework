@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "ast.h"
 
@@ -16,61 +17,61 @@ AST_Node *create_ast_node(AstNodeKind kind, uint64_t val) {
     return node;
 }
 
-void print_ast(AST_Node *node) {
-    if ((*node).kind == AST_NODE_INT) {
-        printf("%lu", (*node).val);
+void get_ast_s_expr(AST_Node *node, char *buf) {
+    if (node->kind == AST_NODE_INT) {
+        sprintf(buf + strlen(buf), "%lu", node->val);
         return;
     } else {
-        printf("(");
-        switch((*node).kind) {
+        sprintf(buf + strlen(buf), "(");
+        switch(node->kind) {
             case AST_NODE_SUBTRACT:
-                printf("- ");
+                sprintf(buf + strlen(buf), "- ");
                 break;
             case AST_NODE_COMPLEMENT:
-                printf("~ ");
+                sprintf(buf + strlen(buf), "~ ");
                 break;
             case AST_NODE_MULT:
-                printf("* ");
+                sprintf(buf + strlen(buf), "* ");
                 break;
             case AST_NODE_DIVIDE:
-                printf("/ ");
+                sprintf(buf + strlen(buf), "/ ");
                 break;
             case AST_NODE_MOD:
-                printf("%% ");
+                sprintf(buf + strlen(buf), "%% ");
                 break;
             case AST_NODE_SHIFT_LEFT:
-                printf("<< ");
+                sprintf(buf + strlen(buf), "<< ");
                 break;
             case AST_NODE_SHIFT_RIGHT:
-                printf(">> ");
+                sprintf(buf + strlen(buf), ">> ");
                 break;
             case AST_NODE_EXPON:
-                printf("** ");
+                sprintf(buf + strlen(buf), "** ");
                 break;
             case AST_NODE_AND:
-                printf("& ");
+                sprintf(buf + strlen(buf), "& ");
                 break;
             case AST_NODE_ADD:
-                printf("+ ");
+                sprintf(buf + strlen(buf), "+ ");
                 break;
             case AST_NODE_OR:
-                printf("| ");
+                sprintf(buf + strlen(buf), "| ");
                 break;
             case AST_NODE_XOR:
-                printf("^ ");
+                sprintf(buf + strlen(buf), "^ ");
                 break;
             default:
-                printf("<op not recognized>");
+                sprintf(buf + strlen(buf), "<op not recognized>");
                 break;
         }
         if (node->left) {
-            print_ast((*node).left);
+            get_ast_s_expr(node->left, buf);
         }
         if (node->right) {
-            printf(" ");
-            print_ast((*node).right);
+            sprintf(buf + strlen(buf), " ");
+            get_ast_s_expr(node->right, buf);
         }
-        printf(")");
+        sprintf(buf + strlen(buf), ")");
         return;
     }
 }

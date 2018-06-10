@@ -32,6 +32,6 @@ typedef struct AST_Node {
 
 AST_Node *create_ast_node(AstNodeKind, uint64_t);
 
-void print_ast(AST_Node *node);
+void get_ast_s_expr(AST_Node *node, char *buf);
 
 #endif
