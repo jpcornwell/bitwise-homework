@@ -144,8 +144,8 @@ AST_Node *parse_unary() {
         token.kind == '~') {
         node = token_to_node(token);
         next_token();
-        (*node).left = parse_unary();
-        (*node).right = NULL;
+        node->left = parse_unary();
+        node->right = NULL;
     } else if (token.kind == TOKEN_INT) {
         node = token_to_node(token);
         next_token();
@@ -198,8 +198,8 @@ AST_Node *parse_mult() {
         node = token_to_node(token);
         next_token();
         right = parse_expon();
-        (*node).left = left;
-        (*node).right = right;
+        node->left = left;
+        node->right = right;
     }
 
     return node;
@@ -220,8 +220,8 @@ AST_Node *parse_add() {
         node = token_to_node(token);
         next_token();
         right = parse_mult();
-        (*node).left = left;
-        (*node).right = right;
+        node->left = left;
+        node->right = right;
     }
 
     return node;
