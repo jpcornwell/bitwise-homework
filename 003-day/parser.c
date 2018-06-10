@@ -35,22 +35,6 @@ void next_token() {
         token.val = val;
         break;
     }
-    case '-':
-        token.kind = TOKEN_MINUS;
-        stream++;
-        break;
-    case '~':
-        token.kind = TOKEN_TILDE;
-        stream++;
-        break;
-    case '/':
-        token.kind = TOKEN_SLASH;
-        stream++;
-        break;
-    case '%':
-        token.kind = TOKEN_PERCENT;
-        stream++;
-        break;
     case '<':
         if (*(stream+1) == '<') {
             token.kind = TOKEN_DOUBLE_LT;
@@ -72,33 +56,8 @@ void next_token() {
             token.kind = TOKEN_DOUBLE_STAR;
             stream += 2;
         } else {
-            token.kind = TOKEN_STAR;
-            stream++;
+            token.kind = *stream++;
         }
-        break;
-    case '&':
-        token.kind = TOKEN_AMPERSAND;
-        stream++;
-        break;
-    case '+':
-        token.kind = TOKEN_PLUS;
-        stream++;
-        break;
-    case '|':
-        token.kind = TOKEN_PIPE;
-        stream++;
-        break;
-    case '^':
-        token.kind = TOKEN_CARET;
-        stream++;
-        break;
-    case '(':
-        token.kind = TOKEN_LEFT_PAREN;
-        stream++;
-        break;
-    case ')':
-        token.kind = TOKEN_RIGHT_PAREN;
-        stream++;
         break;
     case '\0':
         token.kind = TOKEN_EOF;
@@ -127,26 +86,27 @@ void next_token() {
 AST_Node *token_to_node(Token token) {
     AST_Node *node;
 
-    switch (token.kind) {
+    // cast token.kind to int to avoid compiler warnings
+    switch ((int)token.kind) {
         case TOKEN_INT:
             node = create_ast_node(AST_NODE_INT, token.val);
             break;
-        case TOKEN_MINUS:
+        case '-':
             // TODO:
             // look into allowing a minus token to be a SUBTRACT operator
             // or a NEGATIVE operator based on context
             node = create_ast_node(AST_NODE_SUBTRACT, 0);
             break;
-        case TOKEN_TILDE:
+        case '~':
             node = create_ast_node(AST_NODE_COMPLEMENT, 0);
             break;
-        case TOKEN_STAR:
+        case '*':
             node = create_ast_node(AST_NODE_MULT, 0);
             break;
-        case TOKEN_SLASH:
+        case '/':
             node = create_ast_node(AST_NODE_DIVIDE, 0);
             break;
-        case TOKEN_PERCENT:
+        case '%':
             node = create_ast_node(AST_NODE_MOD, 0);
             break;
         case TOKEN_DOUBLE_LT:
@@ -155,16 +115,16 @@ AST_Node *token_to_node(Token token) {
         case TOKEN_DOUBLE_GT:
             node = create_ast_node(AST_NODE_SHIFT_RIGHT, 0);
             break;
-        case TOKEN_AMPERSAND:
+        case '&':
             node = create_ast_node(AST_NODE_AND, 0);
             break;
-        case TOKEN_PLUS:
+        case '+':
             node = create_ast_node(AST_NODE_ADD, 0);
             break;
-        case TOKEN_PIPE:
+        case '|':
             node = create_ast_node(AST_NODE_OR, 0);
             break;
-        case TOKEN_CARET:
+        case '^':
             node = create_ast_node(AST_NODE_XOR, 0);
             break;
         case TOKEN_DOUBLE_STAR:
@@ -180,8 +140,8 @@ AST_Node *token_to_node(Token token) {
 AST_Node *parse_unary() {
     AST_Node *node;
 
-    if (token.kind == TOKEN_MINUS ||
-        token.kind == TOKEN_TILDE) {
+    if (token.kind == '-' ||
+        token.kind == '~') {
         node = token_to_node(token);
         next_token();
         (*node).left = parse_unary();
@@ -189,10 +149,10 @@ AST_Node *parse_unary() {
     } else if (token.kind == TOKEN_INT) {
         node = token_to_node(token);
         next_token();
-    } else if (token.kind == TOKEN_LEFT_PAREN) {
+    } else if (token.kind == '(') {
         next_token();
         node = parse_add();
-        if (token.kind == TOKEN_RIGHT_PAREN) {
+        if (token.kind == ')') {
             next_token();
         } else {
             printf("Expected right parenthesis\n");
@@ -228,12 +188,12 @@ AST_Node *parse_mult() {
 
     node = parse_expon();
 
-    while (token.kind == TOKEN_STAR ||
-           token.kind == TOKEN_SLASH ||
-           token.kind == TOKEN_PERCENT ||
+    while (token.kind == '*' ||
+           token.kind == '/' ||
+           token.kind == '%' ||
            token.kind == TOKEN_DOUBLE_LT ||
            token.kind == TOKEN_DOUBLE_GT ||
-           token.kind == TOKEN_AMPERSAND) {
+           token.kind == '&') {
         left = node;
         node = token_to_node(token);
         next_token();
@@ -252,10 +212,10 @@ AST_Node *parse_add() {
 
     node = parse_mult();
 
-    while (token.kind == TOKEN_PLUS ||
-           token.kind == TOKEN_MINUS ||
-           token.kind == TOKEN_PIPE ||
-           token.kind == TOKEN_CARET) {
+    while (token.kind == '+' ||
+           token.kind == '-' ||
+           token.kind == '|' ||
+           token.kind == '^') {
         left = node;
         node = token_to_node(token);
         next_token();
