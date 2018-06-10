@@ -10,8 +10,7 @@
 
 // lexer
 
-int next_token() {
-    int is_invalid_token = 0;
+void next_token() {
     while (*stream == ' ') {
         stream++;
     }
@@ -57,7 +56,6 @@ int next_token() {
             token.kind = TOKEN_DOUBLE_LT;
             stream += 2;
         } else {
-            is_invalid_token = 1;
             token.kind = *stream++;
         }
         break;
@@ -66,7 +64,6 @@ int next_token() {
             token.kind = TOKEN_DOUBLE_GT;
             stream++;
         } else {
-            is_invalid_token = 1;
             token.kind = *stream++;
         }
         break;
@@ -108,17 +105,10 @@ int next_token() {
         stream++;
         break;
     default:
-        is_invalid_token = 1;
         token.kind = *stream++;
         break;
     }
     token.end = stream;
-
-    if (is_invalid_token) {
-        return 0;
-    } else {
-        return 1;
-    }
 }
 
 // parser

@@ -39,7 +39,7 @@ typedef struct Token {
 Token token;
 const char *stream;
 
-int next_token();
+void next_token();
 
 AST_Node *parse_unary();
 AST_Node *parse_expon();
