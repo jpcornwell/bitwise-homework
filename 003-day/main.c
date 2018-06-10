@@ -26,8 +26,17 @@ void run_test_suite() {
     set_input_stream("1 + 2");
     test_s_expression("(+ 1 2)");
 
+    set_input_stream("1+2");
+    test_s_expression("(+ 1 2)");
+
     set_input_stream("1 + 2 * 3");
     test_s_expression("(+ 1 (* 2 3))");
+
+    set_input_stream("2 ** 3 ** 4");
+    test_s_expression("(** 2 (** 3 4))");
+
+    set_input_stream("5 + ~2");
+    test_s_expression("(+ 5 (~ 2))");
 }
 
 int main(int argc, char **argv) {
